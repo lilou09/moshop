@@ -1,30 +1,60 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Row, Col } from "react-bootstrap";
 import Product from "../component/Product";
+import Message from "../component/Message";
+import Loader from "../component/Loader";
+import Paginate from "../component/Paginate";
+import { listProducts } from "../actions/productActions";
+import ProductCarousel from "../component/ProductCarousel";
+import Meta from "../component/Meta";
+import { Link } from "react-router-dom";
 
 const HomeScreen = () => {
-  const [products, setProducts] = useState([]);
+  const dispatch = useDispatch();
+  const { keyword, pageNumber } = useParams();
+
+  const pageNum = pageNumber || 1;
+
+  const productList = useSelector((state) => state.productList);
+  const { loading, error, products, page, pages } = productList;
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const { data } = await axios.get("/api/products");
+    dispatch(listProducts(keyword, pageNum));
+  }, [dispatch, keyword, pageNum]);
 
-      setProducts(data);
-    };
-
-    fetchProducts();
-  }, []);
   return (
     <>
+      <Meta />
+      {!keyword ? (
+        <ProductCarousel />
+      ) : (
+        <Link to={"/"} className="btn btn-light">
+          Go back
+        </Link>
+      )}
       <h1>Latest Product</h1>
-      <Row>
-        {products.map((product) => (
-          <Col key={product._id} sm={12} md={6} lg={4} xl={3}>
-            <Product product={product} />
-          </Col>
-        ))}
-      </Row>
+      {loading ? (
+        <Loader />
+      ) : error ? (
+        <Message variant="danger">{error}</Message>
+      ) : (
+        <>
+          <Row>
+            {products.map((product) => (
+              <Col key={product._id} sm={12} md={6} lg={4} xl={3}>
+                <Product product={product} />
+              </Col>
+            ))}
+          </Row>
+          <Paginate
+            pages={pages}
+            page={page}
+            keyword={keyword ? keyword : ""}
+          />
+        </>
+      )}
     </>
   );
 };

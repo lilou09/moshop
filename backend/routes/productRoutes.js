@@ -1,36 +1,24 @@
 import express from "express";
-import expressAsyncHandler from "express-async-handler";
-import Product from "../models/productModel.js";
 const router = express.Router();
+import {
+  getProducts,
+  getProductById,
+  deleteProduct,
+  createProduct,
+  updateProduct,
+  createProductReview,
+  getTopProduct,
+} from "../controllers/productController.js";
+import { admin, protect } from "../middleware/authMiddleware.js";
 
-// @desc Fetch all products
-// @route GET /api/products
-// @access public route
+router.route("/").get(getProducts).post(protect, admin, createProduct);
+router.route("/:id/reviews").post(protect, createProductReview);
+router.get("/top", getTopProduct);
 
-router.get(
-  "/",
-  expressAsyncHandler(async (req, res) => {
-    const products = await Product.find({});
-
-    res.json(products);
-  })
-);
-
-// @desc Fetch single products
-// @route GET /api/products/:id
-// @access public route
-
-router.get(
-  "/:id",
-  expressAsyncHandler(async (req, res) => {
-    const product = await Product.findById(req.params.id);
-
-    if (product) {
-      res.json(product);
-    } else {
-      res.status(404).json({ message: "product not found" });
-    }
-  })
-);
+router
+  .route("/:id")
+  .get(getProductById)
+  .delete(protect, admin, deleteProduct)
+  .put(protect, admin, updateProduct);
 
 export default router;
